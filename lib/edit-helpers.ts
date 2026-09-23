@@ -40,7 +40,27 @@ export function cleanSpoken(text: string): string {
   const lead = /^(?:just|simply|instead|now|actually|maybe|perhaps|probably)\s+|^(?:be|say|says|read|reads|become|show|display)\s+|^the (?:words?|text|phrase|label)\s+/i;
   while (lead.test(t)) t = t.replace(lead, "");
   t = t.replace(/(?:\s+(?:instead|please|for now|thanks|thank you))+$/i, "");
-  return unquote(t);
+  return properNouns(unquote(t));
+}
+
+const PROPER = new Map(
+  [
+    "january", "february", "march", "april", "june", "july", "august", "september", "october", "november", "december",
+    "monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday",
+  ].map((w) => [w, cap(w)] as [string, string]).concat([["id", "ID"], ["ids", "IDs"], ["ssn", "SSN"], ["snap", "SNAP"], ["wic", "WIC"], ["tanf", "TANF"], ["faq", "FAQ"], ["faqs", "FAQs"]]),
+);
+
+/** Dictation comes in lowercase: "may 30", "monday", "your id" → "May 30", "Monday", "your ID". */
+export function properNouns(text: string): string {
+  return text
+    .replace(/\b[a-z]+\b/g, (w) => PROPER.get(w) ?? w)
+    .replace(/\bmay(?= \d)/g, "May");
+}
+
+/** Copy that reads as a sentence gets a final period: "see where each application stands" → "…stands." */
+export function sentence(text: string): string {
+  const t = text.trim();
+  return t.split(/\s+/).length >= 4 && !/[.!?:]$/.test(t) ? `${t}.` : t;
 }
 
 export const FIELD_TYPES = [
@@ -177,7 +197,9 @@ const LIST_PHRASES = [
   "apply now", "get started", "learn more", "my account", "your account", "help center", "site map",
   "what's new", "date of birth", "phone number", "email address", "full name", "first name", "last name",
   "zip code", "social security number", "not sure", "prefer not to say", "how to apply", "who can apply",
-  "what to expect", "next steps", "required documents", "contact information",
+  "what to expect", "next steps", "required documents", "contact information", "in review", "under review",
+  "documents needed", "phone call", "text message", "last updated", "get help", "child care", "job training",
+  "food assistance", "health coverage", "housing help", "energy bills",
 ].map((p) => p.split(" "));
 
 /**
@@ -197,12 +219,17 @@ export function spokenList(text: string): string[] {
   const items: string[] = [];
   for (const part of parts) {
     const words = part.split(/\s+/).filter(Boolean);
+    const chunk: string[] = [];
     for (let i = 0; i < words.length; ) {
       const phrase = LIST_PHRASES.filter((p) => p.every((w, k) => words[i + k]?.toLowerCase() === w)).sort((a, b) => b.length - a.length)[0];
       const n = phrase?.length ?? 1;
-      items.push(words.slice(i, i + n).join(" "));
+      chunk.push(words.slice(i, i + n).join(" "));
       i += n;
     }
+    // A joining word left over outside known phrases means one item:
+    // "upload a document and start a new application" (but "date of birth" is a known phrase).
+    if (chunk.some((w) => /^(?:a|an|the|to|your|my|our|for|of|with|new)$/i.test(w))) items.push(part.trim());
+    else items.push(...chunk);
   }
   if (last) items.push(last.trim());
   return items.filter(Boolean);

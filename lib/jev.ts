@@ -14,7 +14,7 @@
 import catalogMeta from "./catalog-meta.json";
 import { PageSpec, SpecNode, newId, labelNode, findNode, removeNode, CONTAINERS } from "./spec";
 import { spokenButtonStyle, cleanSpoken } from "./edits";
-import { spokenList, cap, hrefFor, COUNTING } from "./edit-helpers";
+import { spokenList, cap, hrefFor, COUNTING, spokenIndex, sentence } from "./edit-helpers";
 
 export interface JevQuestion {
   type: "choice";
@@ -273,7 +273,7 @@ function spokenListAfter(utterance: string, ...cues: string[]): string[] {
   return m ? spokenList(m[1]).map(cap) : [];
 }
 
-const FIELD_WORDS = "heading|headline|title|text|message|label|body|body text|description|subheading|tagline|eyebrow|content";
+const FIELD_WORDS = "heading|headline|title|text|message|label|body|body text|description|subheading|tagline|eyebrow|content|items|options|steps|columns|links|sections";
 
 /**
  * Speech has no quotes, so literal copy comes from phrasing:
@@ -285,6 +285,8 @@ function fieldText(utterance: string, names: string[]): string | null {
   const text = m && cleanSpoken(m[1]);
   return text ? cap(text) : null;
 }
+
+const maybeSentence = (t: string | null): string | null => (t ? sentence(t) : null);
 
 /** "… that says X", "… saying X", "… called X", "… titled X" → X. */
 function saysText(utterance: string): string | null {
@@ -370,7 +372,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
 
   switch (component) {
     case "Hero":
-      return { props: { heading: q[0] ?? fieldText(utterance, ["heading", "headline", "title"]) ?? said ?? "Welcome", eyebrow: fieldText(utterance, ["eyebrow", "tagline"]), body: q[1] ?? fieldText(utterance, ["text", "body", "body text", "description", "subheading"]), backgroundUrl: null, ariaLabel: "Introduction" } };
+      return { props: { heading: q[0] ?? fieldText(utterance, ["heading", "headline", "title"]) ?? said ?? "Welcome", eyebrow: fieldText(utterance, ["eyebrow", "tagline"]), body: q[1] ?? maybeSentence(fieldText(utterance, ["text", "body", "body text", "description", "subheading"])), backgroundUrl: null, ariaLabel: "Introduction" } };
     case "GovBanner":
       return { props: { tld: ".gov", expanded: null } };
     case "SiteAlert":
@@ -378,7 +380,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
     case "Header": {
       const items = spokenListAfter(utterance, "navigation", "nav items", "menu items", "menu");
       const navItems = items.length
-        ? items.map((label, i) => ({ label: cap(label), href: label.toLowerCase().includes("sign") ? "/signin" : slug(label), current: i === 0, items: null }))
+        ? items.map((label, i) => ({ label: cap(label), href: label.toLowerCase().includes("sign") ? "/signin" : slug(label), current: /^home$/i.test(label) && i === 0, items: null }))
         : [{ label: "Home", href: "/", current: true, items: null }];
       return { props: { variant: "basic", siteName: forMatch?.[1]?.trim() ?? q[0] ?? "Benefit Tracker", siteUrl: "/", logoUrl: null, logoAlt: null, navItems, showSearch: false } };
     }
@@ -415,7 +417,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
       return { props: {}, children: list.map((t) => ({ id: newId(page), type: "Card", props: { title: cap(t), description: null, headerFirst: null, mediaUrl: null, mediaAlt: null, flag: null } })) };
     }
     case "Card":
-      return { props: { title: q[0] ?? said ?? fieldText(utterance, ["title", "heading"]) ?? forLabel(utterance) ?? "Card", description: q[1] ?? fieldText(utterance, ["description", "text", "body"]), headerFirst: null, mediaUrl: null, mediaAlt: null, flag: null } };
+      return { props: { title: q[0] ?? said ?? fieldText(utterance, ["title", "heading"]) ?? forLabel(utterance) ?? "Card", description: q[1] ?? maybeSentence(fieldText(utterance, ["description", "text", "body"])), headerFirst: null, mediaUrl: null, mediaAlt: null, flag: null } };
     case "Form": {
       const fields = fieldList(utterance);
       const list = fields.length ? fields : ["Full name", "Email address"];
@@ -450,7 +452,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
         props: { segmented: false },
         children: list.map((l, i) => ({
           id: newId(page), type: "Button",
-          props: { label: cap(l), variant: i === 0 ? "default" : "secondary", disabled: false, type: "button" },
+          props: { label: cap(l), variant: i === 0 ? "default" : "outline", disabled: false, type: "button" },
         })),
       };
     }
@@ -466,7 +468,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
     }
     case "Alert": {
       const type = /success/i.test(utterance) ? "success" : /error/i.test(utterance) ? "error" : /warning/i.test(utterance) ? "warning" : /emergency/i.test(utterance) ? "emergency" : "info";
-      return { props: { heading: q.length > 1 ? q[0] : fieldText(utterance, ["heading", "title"]), message: q[1] ?? q[0] ?? fieldText(utterance, ["message", "text"]) ?? said ?? "Alert message.", type, slim: false, noIcon: false } };
+      return { props: { heading: q.length > 1 ? q[0] : fieldText(utterance, ["heading", "title"]), message: q[1] ?? q[0] ?? maybeSentence(fieldText(utterance, ["message", "text"]) ?? said) ?? "Alert message.", type, slim: false, noIcon: false } };
     }
     case "Table": {
       const columns = spokenListAfter(utterance, "columns", "column");
@@ -478,7 +480,7 @@ export function extractNode(component: string, utterance: string, page: PageSpec
       return { props: { text: q[0] ?? said ?? fieldText(utterance, ["text", "title"]) ?? "Page title", level } };
     }
     case "Text":
-      return { props: { text: q[0] ?? said ?? fieldText(utterance, ["text", "content"]) ?? "Supporting text.", variant: /lead/i.test(utterance) ? "lead" : "body" } };
+      return { props: { text: q[0] ?? maybeSentence(said ?? fieldText(utterance, ["text", "content"])) ?? "Supporting text.", variant: /lead/i.test(utterance) ? "lead" : "body" } };
     case "SideNav": {
       const links = spokenListAfter(utterance, "links", "side nav");
       const list = links.length ? links : ["Overview"];
@@ -491,9 +493,15 @@ export function extractNode(component: string, utterance: string, page: PageSpec
       return { props: { heading: q[0] ?? fieldText(utterance, ["heading", "title"]) ?? said ?? "Key information", items: list.length ? list : ["Item one", "Item two"] } };
     }
     case "StepIndicator": {
-      const named = spokenListAfter(utterance, "steps");
+      // The "currently on …" clause names the current step; it isn't one of the steps.
+      const named = spokenListAfter(utterance.replace(/,?\s*\b(?:currently|now)\s+(?:on|at)\b.*$/i, ""), "steps");
       const steps = named.length ? named : Array.from({ length: spokenCount(utterance, 3) }, (_, i) => `Step ${i + 1}`);
-      return { props: { steps, currentStep: 1, counters: null, centered: null, noLabels: null } };
+      // "currently on in review", "on step two"
+      const on = utterance.match(/\b(?:currently on|currently at|on|at)\s+(?:step\s+)?([a-z0-9 ]+?)(?=\s+(?:with|and)\b|[,.]|$)/i)?.[1];
+      const byName = on ? steps.findIndex((s) => s.toLowerCase() === on.toLowerCase()) : -1;
+      const byNumber = on ? spokenIndex(on) : null;
+      const currentStep = byName >= 0 ? byName + 1 : byNumber !== null && byNumber < steps.length ? byNumber + 1 : 1;
+      return { props: { steps, currentStep, counters: null, centered: null, noLabels: null } };
     }
     case "GraphicList": {
       const heads = spokenListAfter(utterance, "items", "values", "features");

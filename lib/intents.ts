@@ -97,6 +97,9 @@ const VERB_START = new RegExp(`^(?:(?:ok(?:ay)?|so|now|also|please|let[’']?s|c
  * "after that", sentence breaks, and on "and" only when both halves start
  * with a command verb. "make the save and cancel buttons big and red" stays whole.
  */
+/** Words after which the rest of a piece is dictated copy, not commands. */
+const DICTATION_CUE = /\b(?:that says|which says|saying|that reads|to say|called|titled|named|with the (?:heading|headline|title|text|message|description|body|words))\b/i;
+
 export function splitCommands(utterance: string): string[] {
   const clean = (s: string) => s.trim().replace(/^[\s,;.]+|[\s,;.]+$/g, "").trim();
   const parts = utterance
@@ -110,7 +113,10 @@ export function splitCommands(utterance: string): string[] {
     if (i === 0) { out.push(piece); return; }
     const sep = seps[i - 1];
     const bareAnd = /^\s*,?\s*and\s*,?\s*$/i.test(sep);
-    const splits = !!piece && VERB_START.test(piece) && (!bareAnd || VERB_START.test(out[out.length - 1]));
+    // Inside dictated copy ("…that says sign in to check your applications, and update your
+    // contact information") only an explicit "and then" / "after that" starts a new command.
+    const inCopy = DICTATION_CUE.test(out[out.length - 1]) && !/\b(?:and then|then|after that|afterwards)\b/i.test(sep);
+    const splits = !!piece && !inCopy && VERB_START.test(piece) && (!bareAnd || VERB_START.test(out[out.length - 1]));
     if (splits && out[out.length - 1]) out.push(piece);
     else out[out.length - 1] = `${out[out.length - 1]}${sep}${p}`.trim();
   });

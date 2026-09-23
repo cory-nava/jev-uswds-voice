@@ -5,8 +5,7 @@
  */
 import type { SpecNode, PageSpec } from "./spec";
 import {
-  Handler, allNodes, cap, cleanSpoken, describe, lastTouched, resolve, tokens, unquote,
-} from "./edit-helpers";
+  Handler, allNodes, cap, cleanSpoken, describe, lastTouched, resolve, tokens, unquote, sentence } from "./edit-helpers";
 
 // ---------------------------------------------------------------------------
 // Options: Select, Radio, CheckboxGroup, ComboBox
@@ -341,7 +340,7 @@ const cards: Handler = (u, page) => {
   if (m) {
     const node = resolve(page, m[1], ["Card"]);
     if (!node) return null;
-    const text = cap(cleanSpoken(m[2]));
+    const text = sentence(cap(cleanSpoken(m[2])));
     node.props.description = text;
     return { kind: "card", changed: true, touched: node.id, note: `Set the description on ${describe(node)} to "${text}".` };
   }
