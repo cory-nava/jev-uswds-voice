@@ -56,6 +56,11 @@ def resolve_bearer_token() -> str:
     env_key = os.environ.get("TYPESAFE_API_KEY")
     if env_key:
         return env_key
+    if not os.path.exists(_CREDENTIAL_HELPER_PATH):
+        raise RuntimeError(
+            "TYPESAFE_API_KEY is not set — export it (get one at https://typesafe.ai) "
+            "or `cp .env.sample .env` and set it there"
+        )
     helper = _load_credential_helper()
     helper.ensure_allowed_url(TYPESAFE_API_URL, ["api.typesafe.ai"])
     entry = helper.dynamic_credential_entry(_CONNECTOR_NAME, "access_token")

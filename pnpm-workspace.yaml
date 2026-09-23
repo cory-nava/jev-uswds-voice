@@ -1,0 +1,3 @@
+# pnpm 11: packages allowed to run install scripts.
+allowBuilds:
+  esbuild: true # used by tsx (pnpm test:commands)
