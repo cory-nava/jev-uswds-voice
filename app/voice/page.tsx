@@ -12,6 +12,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { SpecCanvas } from "@/lib/registry";
 import { DEMO_SCRIPT } from "@/lib/demo-script";
 import type { PageSpec } from "@/lib/spec";
+import { isStopListening } from "@/lib/intents";
 
 interface Decision { question: string; choice: string; label: string; confidence: number | null; }
 interface LogEntry {
@@ -21,6 +22,8 @@ interface LogEntry {
   decisions?: Decision[];
   candidates?: string[];
   ms?: number;
+  /** A link to show with the entry (e.g. /commands when the popup was blocked). */
+  link?: string;
 }
 
 let logId = 0;
@@ -31,10 +34,15 @@ const QUESTION_LABELS: Record<string, string> = {
   target: "target",
   placement: "placement",
   component: "component",
+  history: "history",
+  command: "command",
+  step: "step",
 };
+const FEEDBACK_KEY = "jev-voice-feedback";
 
 export default function VoicePlanner() {
   const [pages, setPages] = useState<PageSpec[]>([]);
+  const [history, setHistory] = useState<Record<string, { undo: number; redo: number }>>({});
   const [currentPageId, setCurrentPageId] = useState("marketing");
   const [log, setLog] = useState<LogEntry[]>([]);
   const [listening, setListening] = useState(false);
@@ -42,11 +50,15 @@ export default function VoicePlanner() {
   const [typed, setTyped] = useState("");
   const [busy, setBusy] = useState(false);
   const [playing, setPlaying] = useState(false);
+  const [feedback, setFeedback] = useState(false);
 
   const armedRef = useRef(false);
   const recRef = useRef<any>(null);
   const logRef = useRef<HTMLDivElement>(null);
   const playRef = useRef(false);
+  const speakingRef = useRef(false);
+  const feedbackRef = useRef(false);
+  const startMicRef = useRef<() => void>(() => {});
 
   const pushLog = useCallback((entry: Omit<LogEntry, "id">) => {
     setLog((prev) => [...prev.slice(-80), { ...entry, id: ++logId }]);
@@ -59,10 +71,46 @@ export default function VoicePlanner() {
       const res = await fetch("/api/pages");
       const data = await res.json();
       setPages(data.pages ?? []);
+      setHistory(data.history ?? {});
     } catch { /* offline */ }
   }, []);
 
   useEffect(() => { refreshPages(); }, [refreshPages]);
+  useEffect(() => {
+    try { setFeedback(localStorage.getItem(FEEDBACK_KEY) === "on"); } catch { /* storage blocked */ }
+  }, []);
+  useEffect(() => { feedbackRef.current = feedback; }, [feedback]);
+  const toggleFeedback = () => {
+    const next = !feedback;
+    setFeedback(next);
+    try { localStorage.setItem(FEEDBACK_KEY, next ? "on" : "off"); } catch { /* storage blocked */ }
+    if (!next) { try { window.speechSynthesis?.cancel(); } catch { /* noop */ } }
+  };
+
+  // ---- spoken feedback: read the note aloud, with the mic paused so it doesn't hear itself ----
+  const speak = useCallback((text: string) => {
+    if (!feedbackRef.current || !text || typeof window === "undefined" || !window.speechSynthesis) return;
+    const synth = window.speechSynthesis;
+    speakingRef.current = true;
+    try { recRef.current?.abort(); } catch { /* not running */ }
+    const resume = () => {
+      speakingRef.current = false;
+      if (armedRef.current) startMicRef.current();
+    };
+    const utt = new SpeechSynthesisUtterance(text);
+    utt.onend = resume;
+    utt.onerror = resume;
+    synth.cancel();
+    synth.speak(utt);
+  }, []);
+
+  const stopMic = useCallback((why?: string) => {
+    armedRef.current = false;
+    try { recRef.current?.stop(); } catch { /* noop */ }
+    setListening(false);
+    setInterim("");
+    if (why) pushLog({ kind: "system", text: why });
+  }, [pushLog]);
   useEffect(() => {
     logRef.current?.scrollTo({ top: logRef.current.scrollHeight, behavior: "smooth" });
   }, [log]);
@@ -70,6 +118,12 @@ export default function VoicePlanner() {
   // ---- utterance pipeline: straight to Jev, then back to listening ----
   const sendUtterance = useCallback(async (utterance: string, pageId?: string) => {
     const targetPage = pageId ?? currentPageIdRef.current;
+    // "stop listening", "pause", "that's all for now": handled here, never sent.
+    if (isStopListening(utterance)) {
+      pushLog({ kind: "utterance", text: utterance });
+      stopMic(armedRef.current ? "Stopped listening. Press “Talk to build” to start again." : "The mic is already off.");
+      return;
+    }
     const t0 = performance.now();
     pushLog({ kind: "utterance", text: utterance });
     setBusy(true);
@@ -89,17 +143,41 @@ export default function VoicePlanner() {
       await refreshPages();
       pushLog({ kind: "decisions", text: "Jev evaluations", decisions: data.decisions, ms, candidates: data.candidates });
       pushLog({ kind: data.changed ? "note" : "system", text: data.note });
+      if (data.openUrl) {
+        // Not "noopener" in the features: then window.open always returns null and we couldn't detect a blocked popup.
+        const win = window.open(data.openUrl, "_blank");
+        if (win) win.opener = null;
+        else pushLog({ kind: "system", text: "Your browser blocked the new tab — open the command reference here:", link: data.openUrl });
+      }
+      speak(data.note);
     } catch (err) {
       pushLog({ kind: "error", text: err instanceof Error ? err.message : String(err) });
     } finally {
       setBusy(false);
     }
-  }, [pushLog, refreshPages]);
+  }, [pushLog, refreshPages, speak, stopMic]);
 
   const currentPageIdRef = useRef(currentPageId);
   useEffect(() => { currentPageIdRef.current = currentPageId; }, [currentPageId]);
   const sendRef = useRef(sendUtterance);
   useEffect(() => { sendRef.current = sendUtterance; }, [sendUtterance]);
+
+  // ---- undo / redo: same pipeline as speech, so it lands in the log ----
+  const canUndo = (history[currentPageId]?.undo ?? 0) > 0;
+  const canRedo = (history[currentPageId]?.redo ?? 0) > 0;
+  const busyRef = useRef(busy);
+  useEffect(() => { busyRef.current = busy; }, [busy]);
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== "z") return;
+      const el = e.target as HTMLElement | null;
+      if (el && (el.tagName === "INPUT" || el.tagName === "TEXTAREA" || el.isContentEditable)) return;
+      e.preventDefault();
+      if (!busyRef.current) void sendRef.current(e.shiftKey ? "redo" : "undo");
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
 
   // ---- live mic loop ----
   const startMic = useCallback(() => {
@@ -115,6 +193,7 @@ export default function VoicePlanner() {
     rec.interimResults = true;
     rec.continuous = false;
     rec.onresult = (e: any) => {
+      if (speakingRef.current) return;
       let interimText = "";
       let finalText = "";
       for (let i = e.resultIndex; i < e.results.length; i++) {
@@ -130,8 +209,9 @@ export default function VoicePlanner() {
     };
     rec.onend = () => {
       // Loop back to listening — utterances keep flowing to Jev.
+      // (While feedback is being spoken, the speech's onend restarts it instead.)
       if (armedRef.current) {
-        try { startMic(); } catch { /* retry next toggle */ }
+        if (!speakingRef.current) { try { startMic(); } catch { /* retry next toggle */ } }
       } else {
         setListening(false);
       }
@@ -148,13 +228,11 @@ export default function VoicePlanner() {
       setListening(true);
     } catch { /* already started */ }
   }, [pushLog]);
+  useEffect(() => { startMicRef.current = startMic; }, [startMic]);
 
   const toggleMic = () => {
     if (armedRef.current) {
-      armedRef.current = false;
-      try { recRef.current?.stop(); } catch { /* noop */ }
-      setListening(false);
-      setInterim("");
+      stopMic();
     } else {
       armedRef.current = true;
       pushLog({ kind: "system", text: "Listening — talk to build. Each utterance goes straight to Jev." });
@@ -192,10 +270,15 @@ export default function VoicePlanner() {
       <div style={{ display: "flex", alignItems: "center", gap: 12, padding: "10px 16px", borderBottom: "1px solid #232a36" }}>
         <strong>Voice planner</strong>
         <div style={{ marginLeft: "auto", display: "flex", gap: 8 }}>
+          <a href="/commands" target="_blank" rel="noopener" style={{ ...btnStyle(), textDecoration: "none" }}>Commands ↗</a>
           <button onClick={playDemo} disabled={busy && !playing} style={btnStyle()}>
             {playing ? "Stop demo" : "Play demo script"}
           </button>
           <button onClick={resetDemo} style={btnStyle()}>Reset</button>
+          <button onClick={toggleFeedback} aria-pressed={feedback} title="Read each result aloud (the mic pauses while it speaks)"
+            style={{ ...btnStyle(), background: feedback ? "#14532d" : btnStyle().background, borderColor: feedback ? "#16a34a" : "#2c3547" }}>
+            🔊 Voice feedback: {feedback ? "on" : "off"}
+          </button>
           <button onClick={toggleMic}
             style={{ ...btnStyle(), background: listening ? "#c0392b" : "#1f6feb", borderColor: listening ? "#c0392b" : "#1f6feb", color: "#fff" }}>
             {listening ? "● Stop mic" : "◉ Talk to build"}
@@ -210,6 +293,12 @@ export default function VoicePlanner() {
             /{p.pageId} <span style={{ opacity: 0.6 }}>({p.nodes.length})</span>
           </button>
         ))}
+        <span style={{ marginLeft: "auto", display: "flex", gap: 6 }}>
+          <button onClick={() => void sendUtterance("undo")} disabled={busy || !canUndo} title="Undo (⌘Z) — or say “undo”"
+            style={{ ...btnStyle(), opacity: busy || !canUndo ? 0.4 : 1 }}>↶ Undo</button>
+          <button onClick={() => void sendUtterance("redo")} disabled={busy || !canRedo} title="Redo (⇧⌘Z) — or say “redo”"
+            style={{ ...btnStyle(), opacity: busy || !canRedo ? 0.4 : 1 }}>↷ Redo</button>
+        </span>
         {interim && <span style={{ color: "#8b98ad", fontStyle: "italic" }}>hearing: “{interim}”</span>}
         {busy && <span style={{ color: "#8b98ad" }}>asking Jev…</span>}
       </div>
@@ -236,8 +325,8 @@ export default function VoicePlanner() {
               {e.kind === "decisions" && (
                 <div style={{ color: "#9fb3c8" }}>
                   <div style={{ color: "#5b6b82" }}>jev · {e.ms}ms round trip</div>
-                  {(e.decisions ?? []).map((d) => (
-                    <div key={d.question}>
+                  {(e.decisions ?? []).map((d, i) => (
+                    <div key={i}>
                       <span style={{ color: "#5b6b82" }}>{QUESTION_LABELS[d.question] ?? d.question}:</span>{" "}
                       {d.label.length > 60 ? d.label.slice(0, 60) + "…" : d.label}
                       {d.confidence != null && <span style={{ color: "#5b6b82" }}> ({d.confidence.toFixed(2)})</span>}
@@ -260,7 +349,12 @@ export default function VoicePlanner() {
                 </div>
               )}
               {e.kind === "note" && <div style={{ color: "#86efac" }}>✓ {e.text}</div>}
-              {e.kind === "system" && <div style={{ color: "#5b6b82" }}>— {e.text}</div>}
+              {e.kind === "system" && (
+                <div style={{ color: "#5b6b82" }}>
+                  — {e.text}
+                  {e.link && <> <a href={e.link} target="_blank" rel="noopener" style={{ color: "#7dd3fc" }}>{e.link} ↗</a></>}
+                </div>
+              )}
               {e.kind === "error" && <div style={{ color: "#f87171" }}>✕ {e.text}</div>}
             </div>
           ))}
