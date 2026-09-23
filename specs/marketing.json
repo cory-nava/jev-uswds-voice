@@ -1,0 +1,145 @@
+{
+  "pageId": "marketing",
+  "title": "Marketing — Benefit Tracker",
+  "nodes": [
+    {
+      "id": "n3",
+      "type": "Header",
+      "props": {
+        "variant": "basic",
+        "siteName": "Benefit Tracker",
+        "siteUrl": "/",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navItems": [
+          {
+            "label": "Home",
+            "href": "/home",
+            "current": true,
+            "items": null
+          },
+          {
+            "label": "Programs",
+            "href": "/programs",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Check status",
+            "href": "/check-status",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Sign in",
+            "href": "/signin",
+            "current": false,
+            "items": null
+          }
+        ],
+        "showSearch": false
+      }
+    },
+    {
+      "id": "n2",
+      "type": "GovBanner",
+      "props": {
+        "tld": ".gov"
+      }
+    },
+    {
+      "id": "n1",
+      "type": "SiteAlert",
+      "props": {
+        "heading": "Demonstration site",
+        "message": "This is a fictional service built by voice for demonstration purposes.",
+        "type": "info"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "Hero",
+      "props": {
+        "heading": "Track your benefits in one place",
+        "eyebrow": null,
+        "body": "One secure account for SNAP, Medicaid, housing help, and more.",
+        "backgroundUrl": null,
+        "ariaLabel": "Introduction"
+      }
+    },
+    {
+      "id": "n8",
+      "type": "CardGroup",
+      "props": {},
+      "children": [
+        {
+          "id": "n5",
+          "type": "Card",
+          "props": {
+            "title": "Apply in one place",
+            "description": null,
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          }
+        },
+        {
+          "id": "n6",
+          "type": "Card",
+          "props": {
+            "title": "Check your status anytime",
+            "description": null,
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          }
+        },
+        {
+          "id": "n7",
+          "type": "Card",
+          "props": {
+            "title": "Get text reminders",
+            "description": null,
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "n9",
+      "type": "Footer",
+      "props": {
+        "variant": "medium",
+        "agencyName": "Benefit Tracker",
+        "agencyUrl": "/",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navGroups": [
+          {
+            "heading": null,
+            "links": [
+              {
+                "label": "Home",
+                "href": "/"
+              },
+              {
+                "label": "Help",
+                "href": "/help"
+              }
+            ]
+          }
+        ],
+        "contactHeading": null,
+        "contactInfo": null,
+        "socialLinks": [],
+        "returnToTop": true
+      }
+    }
+  ],
+  "nextId": 10
+}

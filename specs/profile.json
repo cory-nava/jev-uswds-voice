@@ -1,0 +1,80 @@
+{
+  "pageId": "profile",
+  "title": "profile",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "Heading",
+      "props": {
+        "text": "Edit your profile",
+        "level": "h1"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "Form",
+      "props": {
+        "large": false
+      },
+      "children": [
+        {
+          "id": "n2",
+          "type": "Input",
+          "props": {
+            "label": "Full name",
+            "name": "fullname"
+          }
+        },
+        {
+          "id": "n3",
+          "type": "DateInputGroup",
+          "props": {
+            "label": "Date of birth",
+            "name": "dob",
+            "hint": "For example: January 19 2000"
+          }
+        },
+        {
+          "id": "n4",
+          "type": "Input",
+          "props": {
+            "label": "Phone number",
+            "name": "phone",
+            "type": "tel",
+            "placeholder": "(555) 123-4567"
+          }
+        },
+        {
+          "id": "n8",
+          "type": "ButtonGroup",
+          "props": {
+            "segmented": false
+          },
+          "children": [
+            {
+              "id": "n6",
+              "type": "Button",
+              "props": {
+                "label": "Save",
+                "variant": "default",
+                "disabled": false,
+                "type": "button"
+              }
+            },
+            {
+              "id": "n7",
+              "type": "Button",
+              "props": {
+                "label": "Cancel",
+                "variant": "secondary",
+                "disabled": false,
+                "type": "button"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "nextId": 9
+}

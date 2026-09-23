@@ -1,0 +1,52 @@
+{
+  "pageId": "signin",
+  "title": "signin",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "Heading",
+      "props": {
+        "text": "Sign in to your account",
+        "level": "h1"
+      }
+    },
+    {
+      "id": "n4",
+      "type": "Form",
+      "props": {
+        "large": false
+      },
+      "children": [
+        {
+          "id": "n2",
+          "type": "Input",
+          "props": {
+            "label": "Email address",
+            "name": "email",
+            "type": "email"
+          }
+        },
+        {
+          "id": "n3",
+          "type": "Password",
+          "props": {
+            "label": "Password",
+            "name": "password",
+            "hint": null
+          }
+        },
+        {
+          "id": "n5",
+          "type": "Button",
+          "props": {
+            "label": "Sign in",
+            "variant": "default",
+            "disabled": false,
+            "type": "button"
+          }
+        }
+      ]
+    }
+  ],
+  "nextId": 6
+}

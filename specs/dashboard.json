@@ -1,0 +1,71 @@
+{
+  "pageId": "dashboard",
+  "title": "dashboard",
+  "nodes": [
+    {
+      "id": "n7",
+      "type": "SideNav",
+      "props": {
+        "ariaLabel": "Side navigation"
+      },
+      "children": [
+        {
+          "id": "n3",
+          "type": "Link",
+          "props": {
+            "label": "Overview",
+            "href": "/overview"
+          }
+        },
+        {
+          "id": "n4",
+          "type": "Link",
+          "props": {
+            "label": "Applications",
+            "href": "/applications"
+          }
+        },
+        {
+          "id": "n5",
+          "type": "Link",
+          "props": {
+            "label": "Documents",
+            "href": "/documents"
+          }
+        },
+        {
+          "id": "n6",
+          "type": "Link",
+          "props": {
+            "label": "Profile",
+            "href": "/profile"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n1",
+      "type": "Heading",
+      "props": {
+        "text": "Your applications",
+        "level": "h1"
+      }
+    },
+    {
+      "id": "n2",
+      "type": "Table",
+      "props": {
+        "columns": [
+          "Program",
+          "Status",
+          "Updated"
+        ],
+        "rows": [],
+        "borderless": false,
+        "striped": true,
+        "compact": false
+      }
+    }
+  ],
+  "nextId": 8
+}
