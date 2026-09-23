@@ -1,0 +1,11 @@
+/*
+ * Page-layout touch-ups for voice-built pages (see layoutPage in lib/registry.tsx).
+ * .usa-prose styles headings and paragraphs, but its list rules also indent
+ * component lists (button groups, collections) rendered as <ul class="usa-…">.
+ */
+.usa-prose > ul[class^="usa-"] {
+  padding-left: 0;
+}
+.usa-prose > .usa-button-group {
+  margin-top: 1rem;
+}

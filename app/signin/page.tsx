@@ -34,22 +34,24 @@ export default function SignInPage() {
     }
   };
 
-  // Any button in the voice-built spec submits the form.
+  // Only sign-in style buttons submit; links ("Create an account") navigate as usual.
   const onClick = (e: React.MouseEvent<HTMLFormElement>) => {
-    if ((e.target as HTMLElement).closest("button")) e.currentTarget.requestSubmit();
+    const btn = (e.target as HTMLElement).closest("button");
+    if (btn && /sign ?in|log ?in|continue|submit/i.test(btn.textContent || "")) e.currentTarget.requestSubmit();
   };
 
   return (
-    <div className="grid-container margin-y-4">
-      <p className="usa-hint">Auth provider: {auth.label}</p>
-      {error && <p style={{ color: "#b50909" }}>{error}</p>}
-      {!page ? (
-        <p>Loading…</p>
-      ) : (
+    <>
+      <div className="grid-container padding-y-1">
+        <p className="usa-hint margin-0">Auth provider: {auth.label}</p>
+        {error && <p className="text-error margin-0">{error}</p>}
+        {!page && <p>Loading…</p>}
+      </div>
+      {page && (
         <form onSubmit={onSubmit} onClick={onClick}>
           <SpecCanvas page={page} />
         </form>
       )}
-    </div>
+    </>
   );
 }

@@ -45,16 +45,17 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="grid-container margin-y-4">
-      {user && <p className="usa-hint">Signed in as {user.email} (dev-mode mock)</p>}
-      {saved && <p style={{ color: "#1a5c2a" }}>Profile saved.</p>}
-      {!page ? (
-        <p>Loading…</p>
-      ) : (
+    <>
+      <div className="grid-container padding-y-1">
+        {user && <p className="usa-hint margin-0">Signed in as {user.email} (dev-mode mock)</p>}
+        {saved && <p className="text-success-dark margin-0">Profile saved.</p>}
+        {!page && <p>Loading…</p>}
+      </div>
+      {page && (
         <form onSubmit={onSubmit} onClick={onClick}>
           <SpecCanvas page={page} />
         </form>
       )}
-    </div>
+    </>
   );
 }
