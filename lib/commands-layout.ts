@@ -57,4 +57,35 @@ export const layoutGroups: CommandGroup[] = [
       };
     },
   },
+  {
+    id: "templates",
+    title: "Start from a template",
+    via: "routing",
+    summary: "New pages from the sample pages (marketing, sign in, dashboard, profile), with their structure and styles, ready to edit. Reset to samples restores the originals; your pages go to the trash.",
+    examples: [
+      { say: "create a new marketing page from the template", does: "New page marketing-2 from the marketing template" },
+      { say: "okay let's create a new page called benefits from the marketing template", does: "New page benefits" },
+      { say: "make a sign up page from the sign in template", does: "New page sign-up from the sign-in template" },
+      { say: "start a new page called reports using the dashboard template", does: "New page reports" },
+      { say: "create a page from the landing template", does: "\"landing\" and \"home\" also mean marketing" },
+      { say: "what templates are there", does: "Lists the templates — nothing changes" },
+    ],
+    tips: ["Templates: marketing (landing page), sign in, dashboard (applications table + side nav), profile (form)."],
+    check: (say, page) => {
+      const parsed = parsePageCommand(say);
+      const direct = applyDirectEdit(say, page);
+      const templateKinds = ["fromTemplate", "listTemplates"];
+      const ok = !!parsed && templateKinds.includes(parsed.kind) && !direct;
+      return {
+        ok,
+        detail: !parsed
+          ? "not recognized as a template command"
+          : direct
+            ? `claimed by direct edit: ${direct.note}`
+            : parsed.kind === "fromTemplate"
+              ? `template ${parsed.templateName}${parsed.name ? ` → ${parsed.name}` : ""}`
+              : `parsed intent: ${parsed.kind}`,
+      };
+    },
+  },
 ];

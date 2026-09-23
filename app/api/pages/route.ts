@@ -1,8 +1,13 @@
-/** GET /api/pages — list page specs. DELETE /api/pages — reset demo (clear specs, undo history, and the trash). */
-import { NextResponse } from "next/server";
-import { promises as fs } from "node:fs";
-import path from "node:path";
-import { listPages, historyCounts, clearHistory, clearTrash } from "@/lib/store";
+/**
+ * GET /api/pages — list page specs and their undo counts.
+ * DELETE /api/pages?mode=samples (default) — Reset: current pages go to the
+ * trash and the sample pages (lib/templates/) come back.
+ * DELETE /api/pages?mode=empty — same, but leaves no pages (the demo script
+ * builds everything from blank).
+ */
+import { NextRequest, NextResponse } from "next/server";
+import { listPages, historyCounts } from "@/lib/store";
+import { resetPages } from "@/lib/templates";
 
 export async function GET() {
   const pages = await listPages();
@@ -10,15 +15,7 @@ export async function GET() {
   return NextResponse.json({ pages, history });
 }
 
-export async function DELETE() {
-  const dir = path.join(process.cwd(), "specs");
-  try {
-    const files = await fs.readdir(dir);
-    await Promise.all(files.filter((f) => f.endsWith(".json")).map((f) => fs.unlink(path.join(dir, f))));
-  } catch {
-    /* nothing to clear */
-  }
-  await clearHistory();
-  await clearTrash();
-  return NextResponse.json({ ok: true });
+export async function DELETE(req: NextRequest) {
+  const mode = req.nextUrl.searchParams.get("mode") === "empty" ? "empty" : "samples";
+  return NextResponse.json({ ok: true, ...(await resetPages(mode)) });
 }

@@ -243,9 +243,12 @@ export default function VoicePlanner() {
   // ---- demo script player ----
   const playDemo = async () => {
     if (playRef.current) { playRef.current = false; setPlaying(false); return; }
+    if (!window.confirm("The demo builds every page from blank. Your current pages will move to the trash (say \"restore the … page\" to bring one back). Continue?")) return;
+    await fetch("/api/pages?mode=empty", { method: "DELETE" });
+    await refreshPages();
     playRef.current = true;
     setPlaying(true);
-    pushLog({ kind: "system", text: `Playing ${DEMO_SCRIPT.length} scripted utterances through the live Jev path…` });
+    pushLog({ kind: "system", text: `Playing ${DEMO_SCRIPT.length} scripted utterances through the live Jev path, from blank pages…` });
     for (const step of DEMO_SCRIPT) {
       if (!playRef.current) break;
       setCurrentPageId(step.pageId);
@@ -259,9 +262,13 @@ export default function VoicePlanner() {
   };
 
   const resetDemo = async () => {
-    await fetch("/api/pages", { method: "DELETE" });
-    setPages([]);
-    pushLog({ kind: "system", text: "Cleared all page specs." });
+    if (!window.confirm("Reset to the sample pages? Your current pages will move to the trash (say \"restore the … page\" to bring one back).")) return;
+    const res = await fetch("/api/pages", { method: "DELETE" });
+    const data = await res.json().catch(() => ({}));
+    await refreshPages();
+    setCurrentPageId("marketing");
+    currentPageIdRef.current = "marketing";
+    pushLog({ kind: "system", text: `Restored the sample pages (${(data.restored ?? []).join(", ")}). Moved ${(data.trashed ?? []).length} page(s) to the trash.` });
   };
 
   return (
@@ -274,7 +281,7 @@ export default function VoicePlanner() {
           <button onClick={playDemo} disabled={busy && !playing} style={btnStyle()}>
             {playing ? "Stop demo" : "Play demo script"}
           </button>
-          <button onClick={resetDemo} style={btnStyle()}>Reset</button>
+          <button onClick={resetDemo} style={btnStyle()} title="Restore the sample pages; current pages move to the trash">Reset to samples</button>
           <button onClick={toggleFeedback} aria-pressed={feedback} title="Read each result aloud (the mic pauses while it speaks)"
             style={{ ...btnStyle(), background: feedback ? "#14532d" : btnStyle().background, borderColor: feedback ? "#16a34a" : "#2c3547" }}>
             🔊 Voice feedback: {feedback ? "on" : "off"}

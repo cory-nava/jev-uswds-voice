@@ -1,0 +1,295 @@
+{
+  "pageId": "dashboard",
+  "title": "Your applications \u2014 Benefit Tracker",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "GovBanner",
+      "props": {
+        "tld": ".gov",
+        "expanded": false
+      }
+    },
+    {
+      "id": "n2",
+      "type": "SiteAlert",
+      "props": {
+        "heading": "Demonstration site",
+        "message": "Benefit Tracker is a fictional service built by voice. Don't enter real personal information.",
+        "type": "info",
+        "slim": true
+      }
+    },
+    {
+      "id": "n3",
+      "type": "Header",
+      "props": {
+        "variant": "basic",
+        "siteName": "Benefit Tracker",
+        "siteUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navItems": [
+          {
+            "label": "Programs",
+            "href": "/marketing#programs",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Check status",
+            "href": "/dashboard",
+            "current": true,
+            "items": null
+          },
+          {
+            "label": "Get help",
+            "href": "/marketing#help",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Sign in",
+            "href": "/signin",
+            "current": false,
+            "items": null
+          }
+        ],
+        "showSearch": false
+      }
+    },
+    {
+      "id": "n9",
+      "type": "SideNav",
+      "props": {
+        "ariaLabel": "Account navigation"
+      },
+      "children": [
+        {
+          "id": "n4",
+          "type": "Link",
+          "props": {
+            "label": "Overview",
+            "href": "/dashboard",
+            "external": null,
+            "variant": null
+          }
+        },
+        {
+          "id": "n5",
+          "type": "Link",
+          "props": {
+            "label": "Applications",
+            "href": "/dashboard#applications",
+            "external": null,
+            "variant": null
+          }
+        },
+        {
+          "id": "n6",
+          "type": "Link",
+          "props": {
+            "label": "Documents",
+            "href": "/dashboard#documents",
+            "external": null,
+            "variant": null
+          }
+        },
+        {
+          "id": "n7",
+          "type": "Link",
+          "props": {
+            "label": "Messages",
+            "href": "/dashboard#messages",
+            "external": null,
+            "variant": null
+          }
+        },
+        {
+          "id": "n8",
+          "type": "Link",
+          "props": {
+            "label": "Profile",
+            "href": "/profile",
+            "external": null,
+            "variant": null
+          }
+        }
+      ]
+    },
+    {
+      "id": "n10",
+      "type": "Heading",
+      "props": {
+        "text": "Your applications",
+        "level": "h1"
+      }
+    },
+    {
+      "id": "n11",
+      "type": "Text",
+      "props": {
+        "text": "Welcome back. Here's where each of your applications stands.",
+        "variant": "lead"
+      }
+    },
+    {
+      "id": "n12",
+      "type": "Alert",
+      "props": {
+        "heading": "Action needed",
+        "message": "Upload proof of income for your food assistance application by May 30.",
+        "type": "warning",
+        "slim": false,
+        "noIcon": false
+      }
+    },
+    {
+      "id": "n13",
+      "type": "Table",
+      "props": {
+        "columns": [
+          "Program",
+          "Status",
+          "Last updated"
+        ],
+        "rows": [
+          [
+            "Food assistance",
+            "Documents needed",
+            "May 12"
+          ],
+          [
+            "Health coverage",
+            "In review",
+            "May 8"
+          ],
+          [
+            "Housing help",
+            "Approved",
+            "April 22"
+          ]
+        ],
+        "caption": "Applications",
+        "borderless": null,
+        "striped": true,
+        "compact": null,
+        "scrollable": null
+      }
+    },
+    {
+      "id": "n14",
+      "type": "Heading",
+      "props": {
+        "text": "Health coverage application",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n15",
+      "type": "StepIndicator",
+      "props": {
+        "steps": [
+          "Submitted",
+          "In review",
+          "Decision"
+        ],
+        "currentStep": 2,
+        "counters": null,
+        "centered": null,
+        "noLabels": null
+      }
+    },
+    {
+      "id": "n16",
+      "type": "Heading",
+      "props": {
+        "text": "Quick actions",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n19",
+      "type": "ButtonGroup",
+      "props": {
+        "segmented": false
+      },
+      "children": [
+        {
+          "id": "n17",
+          "type": "Button",
+          "props": {
+            "label": "Upload a document",
+            "variant": "default",
+            "disabled": false,
+            "type": "button",
+            "href": "/dashboard#documents"
+          }
+        },
+        {
+          "id": "n18",
+          "type": "Button",
+          "props": {
+            "label": "Start a new application",
+            "variant": "outline",
+            "disabled": false,
+            "type": "button",
+            "href": "/dashboard#apply"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n20",
+      "type": "Footer",
+      "props": {
+        "variant": "medium",
+        "agencyName": "Benefit Tracker",
+        "agencyUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navGroups": [
+          {
+            "heading": null,
+            "links": [
+              {
+                "label": "Programs",
+                "href": "/marketing#programs"
+              },
+              {
+                "label": "Check status",
+                "href": "/dashboard"
+              },
+              {
+                "label": "Get help",
+                "href": "/marketing#help"
+              },
+              {
+                "label": "Accessibility",
+                "href": "/marketing#accessibility"
+              },
+              {
+                "label": "Privacy",
+                "href": "/marketing#privacy"
+              }
+            ]
+          }
+        ],
+        "contactHeading": "Benefit Tracker help desk",
+        "contactInfo": [
+          {
+            "type": "phone",
+            "value": "(555) 010-0199"
+          },
+          {
+            "type": "email",
+            "value": "help@benefit-tracker.example"
+          }
+        ],
+        "socialLinks": [],
+        "returnToTop": true
+      }
+    }
+  ],
+  "nextId": 21
+}

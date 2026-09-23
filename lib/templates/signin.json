@@ -1,0 +1,249 @@
+{
+  "pageId": "signin",
+  "title": "Sign in \u2014 Benefit Tracker",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "GovBanner",
+      "props": {
+        "tld": ".gov",
+        "expanded": false
+      }
+    },
+    {
+      "id": "n2",
+      "type": "SiteAlert",
+      "props": {
+        "heading": "Demonstration site",
+        "message": "Benefit Tracker is a fictional service built by voice. Don't enter real personal information.",
+        "type": "info",
+        "slim": true
+      }
+    },
+    {
+      "id": "n3",
+      "type": "Header",
+      "props": {
+        "variant": "basic",
+        "siteName": "Benefit Tracker",
+        "siteUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navItems": [
+          {
+            "label": "Programs",
+            "href": "/marketing#programs",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Check status",
+            "href": "/dashboard",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Get help",
+            "href": "/marketing#help",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Sign in",
+            "href": "/signin",
+            "current": true,
+            "items": null
+          }
+        ],
+        "showSearch": false
+      }
+    },
+    {
+      "id": "n4",
+      "type": "Heading",
+      "props": {
+        "text": "Sign in",
+        "level": "h1"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "Text",
+      "props": {
+        "text": "Sign in to check your applications, upload documents, and update your contact information.",
+        "variant": "lead"
+      }
+    },
+    {
+      "id": "n10",
+      "type": "Form",
+      "props": {
+        "large": false
+      },
+      "children": [
+        {
+          "id": "n6",
+          "type": "Input",
+          "props": {
+            "label": "Email address",
+            "name": "email",
+            "type": "email",
+            "placeholder": null,
+            "hint": null,
+            "value": null,
+            "required": true,
+            "disabled": null,
+            "checks": null,
+            "validateOn": null
+          }
+        },
+        {
+          "id": "n7",
+          "type": "Password",
+          "props": {
+            "label": "Password",
+            "name": "password",
+            "hint": null,
+            "value": null,
+            "required": true,
+            "checks": null,
+            "validateOn": null
+          }
+        },
+        {
+          "id": "n8",
+          "type": "Checkbox",
+          "props": {
+            "label": "Keep me signed in on this device",
+            "name": "remember",
+            "hint": null,
+            "checked": null,
+            "tile": null,
+            "checks": null,
+            "validateOn": null
+          }
+        },
+        {
+          "id": "n9",
+          "type": "Button",
+          "props": {
+            "label": "Sign in",
+            "variant": "default",
+            "disabled": false,
+            "type": "submit"
+          }
+        }
+      ]
+    },
+    {
+      "id": "n11",
+      "type": "Link",
+      "props": {
+        "label": "Forgot your password?",
+        "href": "/signin#reset",
+        "external": null,
+        "variant": null
+      }
+    },
+    {
+      "id": "n12",
+      "type": "Divider",
+      "props": {}
+    },
+    {
+      "id": "n13",
+      "type": "Heading",
+      "props": {
+        "text": "Don't have an account?",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n14",
+      "type": "Text",
+      "props": {
+        "text": "Create an account to apply for benefits and track every application in one place.",
+        "variant": "body"
+      }
+    },
+    {
+      "id": "n15",
+      "type": "Button",
+      "props": {
+        "label": "Create an account",
+        "variant": "outline",
+        "disabled": false,
+        "type": "button",
+        "href": "/signin#create"
+      }
+    },
+    {
+      "id": "n16",
+      "type": "Heading",
+      "props": {
+        "text": "Having trouble signing in?",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n17",
+      "type": "Text",
+      "props": {
+        "text": "Call the help desk at (555) 010-0199. We're here Monday to Friday, 8 a.m. to 6 p.m.",
+        "variant": "body"
+      }
+    },
+    {
+      "id": "n18",
+      "type": "Footer",
+      "props": {
+        "variant": "medium",
+        "agencyName": "Benefit Tracker",
+        "agencyUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navGroups": [
+          {
+            "heading": null,
+            "links": [
+              {
+                "label": "Programs",
+                "href": "/marketing#programs"
+              },
+              {
+                "label": "Check status",
+                "href": "/dashboard"
+              },
+              {
+                "label": "Get help",
+                "href": "/marketing#help"
+              },
+              {
+                "label": "Accessibility",
+                "href": "/marketing#accessibility"
+              },
+              {
+                "label": "Privacy",
+                "href": "/marketing#privacy"
+              }
+            ]
+          }
+        ],
+        "contactHeading": "Benefit Tracker help desk",
+        "contactInfo": [
+          {
+            "type": "phone",
+            "value": "(555) 010-0199"
+          },
+          {
+            "type": "email",
+            "value": "help@benefit-tracker.example"
+          }
+        ],
+        "socialLinks": [],
+        "returnToTop": true
+      }
+    }
+  ],
+  "nextId": 19
+}

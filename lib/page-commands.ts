@@ -10,6 +10,7 @@
  */
 import type { PageSpec } from "./spec";
 import { cap, cleanSpoken, normalize } from "./edit-helpers";
+import { TEMPLATES, findTemplate, pageFromTemplate } from "./templates";
 import { commitPage, listPages, loadPage, pageExists, renamePageFile, restorePage as restorePageFile, trashPage } from "./store";
 
 export interface PageCommandResult {
@@ -36,7 +37,9 @@ export type ParsedPageCommand =
   | { kind: "duplicate"; fromName: string; toId: string }
   | { kind: "setTitle"; title: string }
   | { kind: "clear" }
-  | { kind: "list" };
+  | { kind: "list" }
+  | { kind: "fromTemplate"; templateName: string; name: string | null }
+  | { kind: "listTemplates" };
 
 /** Ids that would clash with app routes, or that look like internal/private ids. */
 const RESERVED_IDS = new Set(["commands", "voice", "api"]);
@@ -83,7 +86,36 @@ export function parsePageCommand(utterance: string): ParsedPageCommand | null {
 
   if (/^(?:what pages do i have|list my pages|what pages exist|list the pages)$/i.test(u)) return { kind: "list" };
 
+  const fromTemplate = parseTemplateCommand(u);
+  if (fromTemplate) return fromTemplate;
+
   return null;
+}
+
+/**
+ * "create a new marketing page from the template", "make a benefits page from the marketing template",
+ * "start a new page called sign up using the sign in template", "what templates are there".
+ */
+function parseTemplateCommand(u: string): ParsedPageCommand | null {
+  if (!/\b(?:templates?|samples?|starters?)\b/i.test(u)) return null;
+  if (/^(?:what|which)\s+(?:templates|samples)\b|^(?:list|show)(?:\s+me)?\s+(?:the\s+|all\s+(?:the\s+)?)?(?:templates|samples|starters)\b/i.test(u)) {
+    return { kind: "listTemplates" };
+  }
+  if (!/^(?:create|make|start|build|add|give me|new|use|copy|set up)\b/i.test(u)) return null;
+  const TEMPLATE_WORD = "(?:template|sample(?:\\s+page)?|starter)";
+  // "the marketing template" names the template outright…
+  const named = u.match(new RegExp(`\\b(?:from|using|based on|off|with|use|copy)\\s+(?:the\\s+|a\\s+)?([a-z][a-z ]*?)\\s+${TEMPLATE_WORD}\\b`, "i"));
+  // …otherwise "a new marketing page from the template" names it as the page kind.
+  const kindWord = u.match(/\b(?:a|an|another|new)\s+(?:new\s+|blank\s+|fresh\s+)*([a-z][a-z ]*?)\s+page\b/i)?.[1];
+  const pageKind = kindWord && !/^(?:new|blank|fresh|another)$/i.test(kindWord) ? kindWord : undefined;
+  // "from the template" has no name in it ("the" isn't a template).
+  const namedTemplate = named && !/^(?:the|a|an|this|that)$/i.test(named[1]) ? named[1] : null;
+  const templateName = namedTemplate ?? (pageKind && findTemplate(pageKind) ? pageKind : null);
+  if (!templateName) return null;
+  const called = u.match(/\b(?:called|named|titled)\s+(.+?)(?=\s+(?:from|using|based on|off|with)\b|$)/i)?.[1];
+  // "make a benefits page from the marketing template": a page kind that isn't the template is the new name.
+  const name = called ?? (pageKind && !findTemplate(pageKind) ? pageKind : null);
+  return { kind: "fromTemplate", templateName: templateName.trim(), name: name ? cleanSpoken(name) : null };
 }
 
 /** Pure check: does this utterance look like a page-management command? (Used by tests.) */
@@ -150,6 +182,10 @@ export async function applyPageCommand(utterance: string, currentPageId: string)
 
     case "restore": {
       const target = slugifyPageId(parsed.targetName);
+      // Never overwrite a live page (e.g. the sample page Reset put back).
+      if (await pageExists(target)) {
+        return fail(currentPageId, `A "${target}" page already exists. Rename it first ("rename the ${target} page to …"), then restore.`);
+      }
       const restored = await restorePageFile(target);
       if (!restored) return fail(currentPageId, `No deleted page called "${parsed.targetName}" to restore.`);
       return { note: `Restored "${target}".`, changed: true, pageId: target, spec: restored, pageSwitch: target };
@@ -187,6 +223,29 @@ export async function applyPageCommand(utterance: string, currentPageId: string)
       page.lastTouched = null;
       await commitPage(page);
       return { note: `Cleared "${currentPageId}" — say "undo" to bring it back.`, changed: true, pageId: currentPageId, spec: page };
+    }
+
+    case "fromTemplate": {
+      const template = findTemplate(parsed.templateName);
+      if (!template) {
+        return fail(currentPageId, `No "${parsed.templateName}" template. Templates: ${TEMPLATES.map((t) => t.id).join(", ")}.`);
+      }
+      let id = slugifyPageId(parsed.name ?? template.id);
+      if (isReservedPageId(id)) return fail(currentPageId, `Can't use "${id}" — that name is reserved.`);
+      if (parsed.name && (await pageExists(id))) return fail(currentPageId, `A page called "${id}" already exists — pick another name.`);
+      // Unnamed: marketing-2, marketing-3, …
+      for (let n = 2; !parsed.name && (await pageExists(id)); n++) id = `${slugifyPageId(template.id)}-${n}`;
+      const page = pageFromTemplate(template, id, titleCaseId(id));
+      await commitPage(page);
+      return {
+        note: `Created "${id}" from the ${template.id} template (${template.description}).`,
+        changed: true, pageId: id, spec: page, pageSwitch: id,
+      };
+    }
+
+    case "listTemplates": {
+      const note = `Templates: ${TEMPLATES.map((t) => `${t.id} (${t.description})`).join("; ")}. Say "create a new page from the marketing template".`;
+      return { note, changed: false, pageId: currentPageId, spec: await loadPage(currentPageId) };
     }
 
     case "list": {

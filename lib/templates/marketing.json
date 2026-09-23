@@ -1,0 +1,303 @@
+{
+  "pageId": "marketing",
+  "title": "Benefit Tracker \u2014 Track your benefits in one place",
+  "nodes": [
+    {
+      "id": "n1",
+      "type": "GovBanner",
+      "props": {
+        "tld": ".gov",
+        "expanded": false
+      }
+    },
+    {
+      "id": "n2",
+      "type": "SiteAlert",
+      "props": {
+        "heading": "Demonstration site",
+        "message": "Benefit Tracker is a fictional service built by voice. Don't enter real personal information.",
+        "type": "info",
+        "slim": true
+      }
+    },
+    {
+      "id": "n3",
+      "type": "Header",
+      "props": {
+        "variant": "basic",
+        "siteName": "Benefit Tracker",
+        "siteUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navItems": [
+          {
+            "label": "Programs",
+            "href": "/marketing#programs",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Check status",
+            "href": "/dashboard",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Get help",
+            "href": "/marketing#help",
+            "current": false,
+            "items": null
+          },
+          {
+            "label": "Sign in",
+            "href": "/signin",
+            "current": false,
+            "items": null
+          }
+        ],
+        "showSearch": false
+      }
+    },
+    {
+      "id": "n4",
+      "type": "Hero",
+      "props": {
+        "heading": "Track your benefits in one place",
+        "eyebrow": null,
+        "body": "One secure account for food assistance, health coverage, housing help, and more.",
+        "backgroundUrl": null,
+        "ariaLabel": "Introduction"
+      }
+    },
+    {
+      "id": "n5",
+      "type": "Heading",
+      "props": {
+        "text": "Top tasks",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n12",
+      "type": "CardGroup",
+      "props": {},
+      "children": [
+        {
+          "id": "n7",
+          "type": "Card",
+          "props": {
+            "title": "Apply for benefits",
+            "description": "Answer a few questions once and apply to several programs at the same time.",
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          },
+          "children": [
+            {
+              "id": "n6",
+              "type": "Button",
+              "props": {
+                "label": "Start an application",
+                "variant": "default",
+                "disabled": false,
+                "type": "button",
+                "href": "/signin"
+              }
+            }
+          ]
+        },
+        {
+          "id": "n9",
+          "type": "Card",
+          "props": {
+            "title": "Check your status",
+            "description": "See where each application stands and what you need to do next.",
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          },
+          "children": [
+            {
+              "id": "n8",
+              "type": "Button",
+              "props": {
+                "label": "Check status",
+                "variant": "default",
+                "disabled": false,
+                "type": "button",
+                "href": "/dashboard"
+              }
+            }
+          ]
+        },
+        {
+          "id": "n11",
+          "type": "Card",
+          "props": {
+            "title": "Get text reminders",
+            "description": "Get a text when a deadline is coming up or a decision is made.",
+            "headerFirst": null,
+            "mediaUrl": null,
+            "mediaAlt": null,
+            "flag": null
+          },
+          "children": [
+            {
+              "id": "n10",
+              "type": "Button",
+              "props": {
+                "label": "Sign up for texts",
+                "variant": "default",
+                "disabled": false,
+                "type": "button",
+                "href": "/profile"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "n13",
+      "type": "Heading",
+      "props": {
+        "text": "Explore programs",
+        "level": "h2"
+      }
+    },
+    {
+      "id": "n14",
+      "type": "Collection",
+      "props": {
+        "items": [
+          {
+            "heading": "Food assistance",
+            "href": "/marketing#food-assistance",
+            "description": "Help buying groceries for you and your household.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          },
+          {
+            "heading": "Health coverage",
+            "href": "/marketing#health-coverage",
+            "description": "Free or low-cost health insurance, including for children.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          },
+          {
+            "heading": "Housing help",
+            "href": "/marketing#housing-help",
+            "description": "Rental assistance and help avoiding eviction.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          },
+          {
+            "heading": "Child care",
+            "href": "/marketing#child-care",
+            "description": "Help paying for child care while you work or go to school.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          },
+          {
+            "heading": "Energy bills",
+            "href": "/marketing#energy-bills",
+            "description": "Help with heating and cooling costs.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          },
+          {
+            "heading": "Job training",
+            "href": "/marketing#job-training",
+            "description": "Free training, apprenticeships, and career counseling.",
+            "date": null,
+            "dateLabel": null,
+            "tags": null,
+            "thumbnailUrl": null,
+            "thumbnailAlt": null
+          }
+        ]
+      }
+    },
+    {
+      "id": "n15",
+      "type": "SummaryBox",
+      "props": {
+        "heading": "Need help?",
+        "items": [
+          "Call the help desk at (555) 010-0199, Monday to Friday, 8 a.m. to 6 p.m.",
+          "Chat with us online after you sign in.",
+          "Visit a local office to apply in person."
+        ]
+      }
+    },
+    {
+      "id": "n16",
+      "type": "Footer",
+      "props": {
+        "variant": "medium",
+        "agencyName": "Benefit Tracker",
+        "agencyUrl": "/marketing",
+        "logoUrl": null,
+        "logoAlt": null,
+        "navGroups": [
+          {
+            "heading": null,
+            "links": [
+              {
+                "label": "Programs",
+                "href": "/marketing#programs"
+              },
+              {
+                "label": "Check status",
+                "href": "/dashboard"
+              },
+              {
+                "label": "Get help",
+                "href": "/marketing#help"
+              },
+              {
+                "label": "Accessibility",
+                "href": "/marketing#accessibility"
+              },
+              {
+                "label": "Privacy",
+                "href": "/marketing#privacy"
+              }
+            ]
+          }
+        ],
+        "contactHeading": "Benefit Tracker help desk",
+        "contactInfo": [
+          {
+            "type": "phone",
+            "value": "(555) 010-0199"
+          },
+          {
+            "type": "email",
+            "value": "help@benefit-tracker.example"
+          }
+        ],
+        "socialLinks": [],
+        "returnToTop": true
+      }
+    }
+  ],
+  "nextId": 17
+}
