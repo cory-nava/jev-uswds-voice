@@ -134,6 +134,7 @@ export async function POST(req: NextRequest) {
         pageId: target.pageId,
         spec: target,
         decisions: result.decisions,
+        candidates,
         note: result.note,
         changed: false,
         pageSwitch: target.pageId,
@@ -148,6 +149,7 @@ export async function POST(req: NextRequest) {
         pageId: fresh.pageId,
         spec: fresh,
         decisions: result.decisions,
+        candidates,
         note: `Started a new page: "${newPageId}".`,
         changed: false,
         pageSwitch: fresh.pageId,
@@ -162,6 +164,7 @@ export async function POST(req: NextRequest) {
       pageId: page.pageId,
       spec: page,
       decisions: result.decisions,
+      candidates,
       note: result.note,
       changed: result.changed,
     });

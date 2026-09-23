@@ -19,6 +19,7 @@ interface LogEntry {
   kind: "utterance" | "decisions" | "note" | "error" | "system";
   text: string;
   decisions?: Decision[];
+  candidates?: string[];
   ms?: number;
 }
 
@@ -86,7 +87,7 @@ export default function VoicePlanner() {
         currentPageIdRef.current = data.pageSwitch;
       }
       await refreshPages();
-      pushLog({ kind: "decisions", text: "Jev evaluations", decisions: data.decisions, ms });
+      pushLog({ kind: "decisions", text: "Jev evaluations", decisions: data.decisions, ms, candidates: data.candidates });
       pushLog({ kind: data.changed ? "note" : "system", text: data.note });
     } catch (err) {
       pushLog({ kind: "error", text: err instanceof Error ? err.message : String(err) });
@@ -242,6 +243,20 @@ export default function VoicePlanner() {
                       {d.confidence != null && <span style={{ color: "#5b6b82" }}> ({d.confidence.toFixed(2)})</span>}
                     </div>
                   ))}
+                  {(e.candidates?.length ?? 0) > 0 && (
+                    <div style={{ color: "#5b6b82", marginTop: 2 }}>
+                      considered:{" "}
+                      {(e.candidates ?? []).map((c, i) => {
+                        const winner = (e.decisions ?? []).find((d) => d.question === "component")?.label === c;
+                        return (
+                          <span key={c}>
+                            {i > 0 && " · "}
+                            <span style={winner ? { color: "#e6e9ef", fontWeight: 700 } : undefined}>{c}</span>
+                          </span>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               )}
               {e.kind === "note" && <div style={{ color: "#86efac" }}>✓ {e.text}</div>}
