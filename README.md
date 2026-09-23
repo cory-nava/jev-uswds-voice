@@ -34,19 +34,31 @@ pattern (Jev + shadcn, Sep 2026), adapted to USWDS:
 ## Quick start
 
 ```bash
-npm install
+pnpm install
+pnpm setup:py   # creates .venv with the Jev bridge's Python deps (httpx)
 
 # 1. Jev API key (TypeSafe). Get one at https://typesafe.ai
-export TYPESAFE_API_KEY=...
+cp .env.sample .env   # then set TYPESAFE_API_KEY in .env
 
 # 2. Run (production mode — the sandbox-tested path)
-npm run build
-PORT=3100 npm start
+pnpm build
+PORT=3100 pnpm start
 ```
 
 Open http://localhost:3100/voice — the voice planner. Click **Talk to build**
 (or **Play demo script** for the scripted 18-utterance walkthrough), then open
 the generated pages (`/marketing`, `/signin`, `/dashboard`, `/profile`).
+
+**What can I say?** See http://localhost:3100/commands (also linked from the
+voice planner, or say "what can I say") for every supported command with
+examples: adding any of the 62 USWDS components, changing text, options,
+links, alerts, field types, cards, header/footer settings, button styles and
+size, form field details, tables, nav/list items, moving, duplicating,
+grouping, removing, managing pages, "it"/"that", corrections ("no, I meant
+the cancel button"), several commands in one breath, read-back, undo/redo, and
+mic control with optional spoken feedback. The list is
+generated from `lib/commands.ts`, and `pnpm test:commands` runs every example
+through the real parsers, so update both together.
 
 > The demo utterances live in `lib/demo-script.ts`; `scripts/run-demo.mjs`
 > replays them through the live API for regression testing (18/18 expected).
@@ -56,7 +68,8 @@ the generated pages (`/marketing`, `/signin`, `/dashboard`, `/profile`).
 ```
 app/voice/page.tsx        voice planner: mic loop, transcript + Jev decision log,
                           page tabs, live canvas, demo player
-app/api/jev/route.ts      utterance -> nav interception -> Jev bridge -> JSON patch
+app/api/jev/route.ts      utterance -> undo/nav -> direct edits -> Jev bridge -> JSON patch
+app/commands/page.tsx     voice command reference (rendered from lib/commands.ts)
 app/[pageId]/page.tsx     dynamic route rendering any spec by id
 app/{marketing,signin,dashboard,profile}/  generated pages (spec-driven;
                           signin/dashboard/profile wrap specs with mock auth)
@@ -66,9 +79,23 @@ lib/jev_bridge.py         stdin->Jev->stdout bridge (surrogate or TYPESAFE_API_K
 lib/spec.ts               id-tagged spec nodes; toRenderSpec -> flat element map
 lib/catalog.ts            component registry (62 USWDS definitions)
 lib/registry.tsx          SpecCanvas: JSONUIProvider + Renderer
-lib/store.ts              specs/*.json persistence
+lib/edit-helpers.ts       shared: filler cleanup, spoken lists, resolving "the save
+                          button" / "it" to an element
+lib/edits.ts              direct edits resolved on the page, no Jev call: move,
+                          duplicate, field details, nav/list items, tables, button
+                          styles, remove; registers the lib/edits-*.ts modules
+lib/edits-content.ts      options, links, alerts, field types, cards, header/footer
+lib/edits-layout.ts       grouping: button groups, grids, sections, move into/out of
+lib/edits-conversation.ts pronoun edits ("change it to say …")
+lib/page-commands.ts      rename / delete / restore / duplicate pages, title, start over
+lib/session.ts            corrections, several commands at once, read-back outline
+lib/intents.ts            navigation, undo/redo (with counts), help, mic phrases
+lib/commands.ts           command reference (with lib/commands-*.ts): source for
+                          /commands and pnpm test:commands
+lib/store.ts              specs/*.json persistence, per-page undo history, trash
 lib/auth.tsx              AuthProvider interface: mock now, login.gov / id.me later
 lib/demo-script.ts        18 scripted utterances (the demo walkthrough)
+scripts/check-commands.ts checks every lib/commands.ts example (pnpm test:commands)
 specs/                    built page specs (marketing, signin, dashboard, profile)
 ```
 
@@ -98,6 +125,7 @@ the provider only handles the credential exchange behind it.
 | Env var | Purpose |
 |---|---|
 | `TYPESAFE_API_KEY` | Jev API key (or use the `custom.typesafe` connector via authd) |
+| `JEV_PYTHON` | Python interpreter for the Jev bridge (default `.venv/bin/python`) |
 | `NEXT_PUBLIC_AUTH_PROVIDER` | `mock` (default), `logingov`, `idme` |
 
 Nothing in this project deploys anywhere on its own — it runs on localhost.
