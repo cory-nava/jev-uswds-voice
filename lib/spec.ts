@@ -16,6 +16,8 @@ export interface PageSpec {
   title: string;
   nodes: SpecNode[];
   nextId: number;
+  /** Id of the element changed most recently — what "it" / "that" refer to. */
+  lastTouched?: string | null;
 }
 
 export function emptyPage(pageId: string, title?: string): PageSpec {
@@ -105,7 +107,7 @@ export const CONTAINERS = new Set([
   "ButtonGroup",
   "Grid",
   "Section",
-  "List",
+  // List isn't here: it renders from an `items: string[]` prop, not children.
   "InPageNavigation",
   "Breadcrumb",
 ]);
