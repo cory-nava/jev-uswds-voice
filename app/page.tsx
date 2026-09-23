@@ -12,6 +12,9 @@ export default function Home() {
       <Link href="/voice" className="usa-button usa-button--big">
         Open the voice planner
       </Link>
+      <Link href="/commands" className="usa-button usa-button--big usa-button--outline">
+        What can I say?
+      </Link>
       <h2 className="margin-top-6">Generated pages</h2>
       <ul className="usa-list">
         <li><Link href="/marketing">Marketing page</Link></li>
