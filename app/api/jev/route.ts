@@ -23,8 +23,8 @@ import type { PageSpec } from "@/lib/spec";
 import { NAV_RE, isHelpRequest, isOutlineRequest, parseUndoCount, splitCommands } from "@/lib/intents";
 import { guessPageId, seedNewPage, type Decision } from "@/lib/jev";
 import { applyPageCommand } from "@/lib/page-commands";
-import { applyUtterance, commandDecision, correctedUtterance, outline, parseCorrection, type Correction } from "@/lib/session";
-import { markApplied, readSession, remember, stepMany } from "@/lib/session-store";
+import { applyUtterance, commandDecision, correctedUtterance, outline, parseCorrection, type Correction, changeState, fingerprint } from "@/lib/session";
+import { readSession, remember, stepMany } from "@/lib/session-store";
 
 const BRIDGE = path.join(process.cwd(), "lib", "jev_bridge.py");
 const PYTHON = process.env.JEV_PYTHON || path.join(process.cwd(), ".venv", "bin", "python");
@@ -87,7 +87,6 @@ const clone = (p: PageSpec): PageSpec => JSON.parse(JSON.stringify(p));
 async function undoRedo(page: PageSpec, direction: "undo" | "redo", count: number | "all") {
   const { restored, steps } = await stepMany(page.pageId, direction, count);
   const counts = await historyCounts(page.pageId);
-  if (steps) await markApplied(page.pageId, direction === "redo");
   const verb = direction === "undo" ? "Undid" : "Redid";
   const asked = count === "all" ? null : count;
   const note = !steps
@@ -113,14 +112,26 @@ async function correct(correction: Correction, page: PageSpec, pages: PageSpec[]
   });
   const rec = await readSession(page.pageId);
   if (!rec) return reply(page, "Nothing to correct yet — I don't have a previous change on this page.", false);
+  // Compare the page with the remembered change: still the latest change → undo it
+  // first; already undone → retry on top of the current page; anything else changed
+  // since (start over, a title change, several undos and redos) → don't guess.
+  const state = changeState(rec, page);
+  if (state === "stale") {
+    return reply(page, `The page has changed since "${rec.utterance}", so I won't undo that — say the whole command again.`, false);
+  }
+  const applied = state === "applied";
   let base = page;
-  if (rec.changed) {
+  if (applied) {
     const undone = await stepHistory(page.pageId, "undo");
     if (!undone) return reply(page, "Nothing to undo on this page, so there's nothing to correct.", false);
+    if (fingerprint(undone) !== rec.before) {
+      const back = await stepHistory(page.pageId, "redo");
+      return reply(back ?? page, `The page has changed since "${rec.utterance}", so I won't undo that — say the whole command again.`, false);
+    }
     base = undone;
   }
   const restore = async (why: string) => {
-    const back = rec.changed ? await stepHistory(page.pageId, "redo") : null;
+    const back = applied ? await stepHistory(page.pageId, "redo") : null;
     return reply(back ?? base, why, false);
   };
   // "it" in the retried command still means the element the correction is about.
@@ -132,14 +143,14 @@ async function correct(correction: Correction, page: PageSpec, pages: PageSpec[]
   try {
     step = await applyUtterance(retry, base, pages, askJev);
   } catch (err) {
-    if (rec.changed) await stepHistory(page.pageId, "redo");
+    if (applied) await stepHistory(page.pageId, "redo");
     throw err;
   }
   if (!step.changed || step.pageSwitch) return restore(`Tried "${retry}" instead, but it didn't apply: ${step.note}`);
   await commitPage(base);
   await remember(retry, before, base);
   return {
-    ...reply(base, `${rec.changed ? `Undid "${rec.utterance}" and did` : "Did"} "${retry}" instead. ${step.note}`, true, step.decisions),
+    ...reply(base, `${applied ? `Undid "${rec.utterance}" and did` : "Did"} "${retry}" instead. ${step.note}`, true, step.decisions),
     candidates: step.candidates,
   };
 }

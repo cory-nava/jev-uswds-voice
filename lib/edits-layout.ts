@@ -4,7 +4,7 @@
  * Documented in lib/commands-layout.ts.
  */
 import { PageSpec, SpecNode, newId, CONTAINERS } from "./spec";
-import { Handler, allNodes, describe, locate, resolve, spokenIndex, tokens } from "./edit-helpers";
+import { Handler, allNodes, describe, locate, resolve, spokenIndex, tokens, contains } from "./edit-helpers";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -209,6 +209,11 @@ const moveInto: Handler = (u, page) => {
   if (!targets) return null;
   const items = targets.filter((n) => n.id !== target.id);
   if (!items.length) return null;
+  // "move the form into the section" when the section is inside the form.
+  const holder = items.find((n) => contains(n, target.id));
+  if (holder) {
+    return { kind: "layout", changed: false, note: `${describe(target)} is inside ${describe(holder)}, so ${describe(holder)} can't move into it.` };
+  }
   const sorted = sortByDocOrder(page, items);
   const touchedLists = new Set<SpecNode[]>();
   for (const n of sorted) {

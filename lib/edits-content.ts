@@ -44,7 +44,10 @@ function resolveOptionField(page: PageSpec, phrase: string): SpecNode | null {
       .sort((a, b) => b.overlap - a.overlap);
     if (scored.length) return scored[0].n;
   }
-  return fields.length === 1 ? fields[0] : null;
+  // "the only one on the page" only when the phrase says what kind of field it
+  // is: "add Help to the navigation" must not land in the page's single radio group.
+  const namesOptionField = /\b(?:drop ?down|select|options?|radio|check ?box(?:es)?|combo ?box)\b/i.test(trimmed);
+  return namesOptionField && fields.length === 1 ? fields[0] : null;
 }
 
 /**
@@ -186,7 +189,14 @@ const ALERT_TYPES: Array<[RegExp, string]> = [
  * change the alert message to … · make the alert slim · remove the alert icon
  */
 const alerts: Handler = (u, page) => {
-  const node = resolve(page, u, ["Alert", "SiteAlert"]) ?? resolve(page, "the alert", ["Alert", "SiteAlert"]);
+  // Only when the alert is named ("the alert", "the banner") or is "it" right
+  // after changing one: "make contact information required" isn't about the alert.
+  const pronoun = /^(?:make|set|turn|change|remove|hide|drop)\s+(?:it|that|this)(?:'s|s)?\b/i.test(u);
+  const named = /\b(?:site\s+)?alert\b|\bbanner\b/i.test(u) && !/\b(?:gov(?:ernment)?|official)\s+banner\b/i.test(u);
+  if (!named && !(pronoun && lastTouched(page, ["Alert", "SiteAlert"]))) return null;
+  const node = named
+    ? resolve(page, u, ["Alert", "SiteAlert"]) ?? resolve(page, "the alert", ["Alert", "SiteAlert"])
+    : lastTouched(page, ["Alert", "SiteAlert"]);
   if (!node) return null;
 
   const typeHit = ALERT_TYPES.find(([re]) => re.test(u));

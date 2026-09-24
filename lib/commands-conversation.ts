@@ -74,7 +74,7 @@ export const conversationGroups: CommandGroup[] = [
       const before = clone(page);
       const first = applyDirectEdit(prior, page);
       if (!first?.changed) return { ok: false, detail: `prior "${prior}" didn't apply` };
-      const record = recordFor(prior, before, page, true);
+      const record = recordFor(prior, before, page);
       const correction = parseCorrection(say);
       if (!correction) return { ok: false, detail: "not recognized as a correction" };
       const undone = clone(before);

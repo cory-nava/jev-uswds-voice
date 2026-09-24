@@ -10,7 +10,7 @@
  */
 import { PageSpec, SpecNode, newId } from "./spec";
 import {
-  DirectEdit, FIELD_TYPES, lastTouched, Handler, TEXT_KEYS, allNodes, cap, cleanSpoken, describe, escapeRe, hrefFor, locate, nodeText, normalize, resolve, spokenList, spokenIndex, tokens, typesIn, unquote,
+  DirectEdit, FIELD_TYPES, lastTouched, Handler, TEXT_KEYS, allNodes, cap, cleanSpoken, describe, escapeRe, hrefFor, locate, nodeText, normalize, resolve, spokenList, spokenIndex, tokens, typesIn, unquote, contains,
 } from "./edit-helpers";
 import { conversationHandlers } from "./edits-conversation";
 import { contentHandlers } from "./edits-content";
@@ -53,10 +53,14 @@ const move: Handler = (u, page) => {
     const node = resolve(page, m[1]);
     const anchor = resolve(page, m[3]);
     if (!node || !anchor || node.id === anchor.id) return null;
-    const from = locate(page, node.id)!;
+    // "move the form above the save button": the anchor is inside what's moving.
+    if (contains(node, anchor.id)) {
+      return { kind: "move", changed: false, note: `${describe(anchor)} is inside ${describe(node)}, so it can't move next to it.` };
+    }
+    const from = locate(page, node.id);
+    if (!from) return null;
     from.list.splice(from.index, 1);
-    const to = locate(page, anchor.id);
-    if (!to) return null;
+    const to = locate(page, anchor.id)!;
     const before = /above|before|over/i.test(m[2]);
     to.list.splice(before ? to.index : to.index + 1, 0, node);
     return { kind: "move", changed: true, touched: node.id, note: `Moved ${describe(node)} ${before ? "above" : "below"} ${describe(anchor)}.` };
@@ -639,11 +643,15 @@ const HANDLERS: Handler[] = [...conversationHandlers, buttonStyle, table, ...con
 export function applyDirectEdit(utterance: string, page: PageSpec): DirectEdit | null {
   const u = normalize(utterance);
   for (const h of HANDLERS) {
+    // A handler that returns null must leave the page as it found it; undo any
+    // partial edit so it can't leak into the Jev path and get saved.
+    const before = JSON.stringify(page);
     const r = h(u, page);
     if (r) {
       if (r.touched !== undefined) page.lastTouched = r.touched;
       return r;
     }
+    if (JSON.stringify(page) !== before) Object.assign(page, JSON.parse(before));
   }
   return null;
 }

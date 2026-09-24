@@ -282,7 +282,7 @@ const FIELD_WORDS = "heading|headline|title|text|message|label|body|body text|de
 function fieldText(utterance: string, names: string[]): string | null {
   const m = utterance.match(new RegExp(
     `\\b(?:with|and|plus)\\s+(?:the\\s+|a\\s+|an\\s+)?(?:${names.join("|")})\\s+(?:of\\s+|that says\\s+|saying\\s+)?(.+?)(?=\\s+(?:and|with|plus)\\s+(?:the\\s+|a\\s+|an\\s+)?(?:${FIELD_WORDS})\\b|$)`, "i"));
-  const text = m && cleanSpoken(m[1]);
+  const text = m && cleanSpoken(m[1], { literal: true });
   return text ? cap(text) : null;
 }
 
@@ -291,7 +291,7 @@ const maybeSentence = (t: string | null): string | null => (t ? sentence(t) : nu
 /** "… that says X", "… saying X", "… called X", "… titled X" → X. */
 function saysText(utterance: string): string | null {
   const m = utterance.match(/\b(?:that says|which says|saying|that reads|reading|with the words|called|titled|named|labeled|labelled)\s+(.+)$/i);
-  const text = m && cleanSpoken(m[1]);
+  const text = m && cleanSpoken(m[1], { literal: true });
   return text ? cap(text) : null;
 }
 
@@ -441,8 +441,12 @@ export function extractNode(component: string, utterance: string, page: PageSpec
       return { props: { label: q[0] ?? "Password", name: "password", hint: null, value: null, required: null, checks: null, validateOn: null } };
     case "Button": {
       const rawLabel = q[0] ?? said ?? utterance.match(/(?:add|make|put)\s+(?:a\s+|an\s+)?(.+?)\s+button/i)?.[1]?.trim() ?? "Submit";
-      const { variant, size } = spokenButtonStyle(utterance);
-      const label = (q[0] ? rawLabel : spokenButtonStyle(rawLabel).label) || "Submit";
+      // Style words count only outside a dictated label: "a button that says read the plain
+      // language guide" is a default button, and its label keeps every word.
+      const dictated = q[0] ?? said;
+      const styleText = dictated && said ? utterance.slice(0, utterance.toLowerCase().lastIndexOf(said.toLowerCase())) : utterance;
+      const { variant, size } = spokenButtonStyle(styleText);
+      const label = (dictated ? rawLabel : spokenButtonStyle(rawLabel).label) || "Submit";
       return { props: { label: cap(label), variant, size, disabled: false, type: "button" } };
     }
     case "ButtonGroup": {

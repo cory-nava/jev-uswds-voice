@@ -35,9 +35,13 @@ export const unquote = (s: string) => s.trim().replace(/^["'“]|["'”]$/g, "")
  * New text as spoken after "to": drop the filler around it. "to just be first
  * name" → "first name"; "to say Apply now instead" → "Apply now".
  */
-export function cleanSpoken(text: string): string {
+export function cleanSpoken(text: string, opts: { literal?: boolean } = {}): string {
   let t = unquote(text).replace(/[.!?]+$/, "");
-  const lead = /^(?:just|simply|instead|now|actually|maybe|perhaps|probably)\s+|^(?:be|say|says|read|reads|become|show|display)\s+|^the (?:words?|text|phrase|label)\s+/i;
+  // `literal`: the text follows "that says" / "with the heading", so a leading
+  // "read" or "show" is part of it ("that says read the guide").
+  const lead = opts.literal
+    ? /^the (?:words?|text|phrase)\s+/i
+    : /^(?:just|simply|instead|now|actually|maybe|perhaps|probably)\s+|^(?:be|say|says|read|reads|become|show|display)\s+|^the (?:words?|text|phrase|label)\s+/i;
   while (lead.test(t)) t = t.replace(lead, "");
   t = t.replace(/(?:\s+(?:instead|please|for now|thanks|thank you))+$/i, "");
   return properNouns(unquote(t));
@@ -164,6 +168,11 @@ export function lastTouched(page: PageSpec, onlyTypes?: string[]): SpecNode | nu
 export function resolve(page: PageSpec, phrase: string, onlyTypes?: string[]): SpecNode | null {
   if (PRONOUN_RE.test(phrase.trim())) return lastTouched(page, onlyTypes);
   return candidates(page, phrase, onlyTypes)[0] ?? null;
+}
+
+/** True if `id` is somewhere inside `ancestor` (not `ancestor` itself). */
+export function contains(ancestor: SpecNode, id: string): boolean {
+  return allNodes(ancestor.children ?? []).some((n) => n.id === id);
 }
 
 /** The array a node lives in (top level or a parent's children) and its index. */

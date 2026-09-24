@@ -19,9 +19,29 @@ export interface SessionRecord {
   phrase: string | null;
   targetId: string | null;
   targetType: string | null;
-  /** False once the change has been undone (a correction then won't undo again). */
-  changed: boolean;
+  /** Fingerprints of the page right before and right after the change. A
+   *  correction compares the current page with them to know whether the
+   *  change is applied, was undone, or has been built on since. */
+  before: string;
+  after: string;
   at: number;
+}
+
+/** Content fingerprint of a page (nodes + title; "it" tracking ignored). FNV-1a, so it runs anywhere. */
+export function fingerprint(page: PageSpec): string {
+  const text = JSON.stringify({ title: page.title, nodes: page.nodes });
+  let h = 0x811c9dc5;
+  for (let i = 0; i < text.length; i++) {
+    h ^= text.charCodeAt(i);
+    h = Math.imul(h, 0x01000193) >>> 0;
+  }
+  return `${text.length.toString(36)}-${h.toString(36)}`;
+}
+
+/** Where the remembered change stands relative to the current page. */
+export function changeState(record: SessionRecord, page: PageSpec): "applied" | "undone" | "stale" {
+  const now = fingerprint(page);
+  return now === record.after ? "applied" : now === record.before ? "undone" : "stale";
 }
 
 // ---------------------------------------------------------------------------
@@ -128,14 +148,15 @@ export function referencePhrase(utterance: string, node: SpecNode | null): strin
 }
 
 /** Remember what `utterance` did to the page (`before` → `after`). */
-export function recordFor(utterance: string, before: PageSpec, after: PageSpec, changed: boolean): SessionRecord {
+export function recordFor(utterance: string, before: PageSpec, after: PageSpec): SessionRecord {
   const node = affectedNode(before, after);
   return {
     utterance: utterance.trim(),
     phrase: referencePhrase(utterance.trim(), node),
     targetId: node?.id ?? null,
     targetType: node?.type ?? null,
-    changed,
+    before: fingerprint(before),
+    after: fingerprint(after),
     at: Date.now(),
   };
 }
